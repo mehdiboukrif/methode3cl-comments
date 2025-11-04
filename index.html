@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Commentaires - Méthode 3CL</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 10px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: transparent;
+        }
+        
+        @media (prefers-color-scheme: dark) {
+            body { background: #1e1e1e; color: #ffffff; }
+        }
+        
+        hyvor-talk-comments {
+            width: 100%;
+            min-height: 400px;
+        }
+    </style>
+</head>
+<body>
+    <div id="comments-container">
+        <p>Chargement des commentaires...</p>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const pageUrl = urlParams.get('url') || window.parent.location.href;
+        
+        const comments = document.createElement("hyvor-talk-comments");
+        comments.setAttribute("website-id", "11990");
+        comments.setAttribute('page-url', pageUrl);
+        
+        document.getElementById('comments-container').appendChild(comments);
+        
+        const script = document.createElement('script');
+        script.src = 'https://talk.hyvor.com/embed/embed.js';
+        script.async = true;
+        document.head.appendChild(script);
+        
+        function adjustIframeHeight() {
+            const height = Math.max(document.body.scrollHeight, 500);
+            window.parent.postMessage({
+                type: 'resize',
+                height: height
+            }, '*');
+        }
+        
+        const resizeObserver = new ResizeObserver(adjustIframeHeight);
+        resizeObserver.observe(document.body);
+        
+        window.addEventListener('load', () => {
+            setTimeout(adjustIframeHeight, 1500);
+        });
+        
+        // Ajustement périodique pour les commentaires dynamiques
+        setInterval(adjustIframeHeight, 3000);
+    </script>
+</body>
+</html>

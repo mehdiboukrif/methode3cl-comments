@@ -10,12 +10,23 @@
             margin: 0; 
             padding: 20px; 
             background: #fff;
+            min-height: 400px;
         }
-        #comments-container { min-height: 400px; }
+        #comments-container { 
+            min-height: 400px; 
+            width: 100%;
+        }
+        hyvor-talk-comments {
+            display: block;
+            width: 100%;
+            min-height: 300px;
+        }
     </style>
 </head>
 <body>
-    <div id="comments-container">Chargement des commentaires...</div>
+    <div id="comments-container">
+        <p>Chargement des commentaires...</p>
+    </div>
     
     <script>
         const urlParams = new URLSearchParams(window.location.search);
@@ -28,37 +39,70 @@
         }
         
         const pageId = toPageId(pageUrl);
-        console.log('🆔 Page ID:', pageId);
+        console.log('🆔 Page ID utilisé:', pageId);
+        console.log('🔗 URL originale:', pageUrl);
         
-        // Version alternative : charger Hyvor via innerHTML au lieu d'import
+        // Nettoyer le container
         const container = document.getElementById('comments-container');
-        container.innerHTML = `
-            <div data-hyvor-talk-id="11990" data-hyvor-talk-page-id="${pageId}"></div>
-        `;
+        container.innerHTML = '';
         
-        // Charger le script Hyvor de manière synchrone
+        // Créer l'élément Hyvor Talk comme avant mais sans les imports problématiques
+        const comments = document.createElement("hyvor-talk-comments");
+        comments.setAttribute("website-id", "11990");
+        comments.setAttribute('page-id', pageId);
+        
+        // Ajouter l'élément
+        container.appendChild(comments);
+        console.log('✅ Élément hyvor-talk-comments créé');
+        
+        // Charger le script SANS type="module" pour éviter les erreurs d'import
         const script = document.createElement('script');
         script.src = 'https://talk.hyvor.com/embed/embed.js';
-        script.type = 'text/javascript';  // Pas de module
+        script.async = true;
+        
         script.onload = () => {
-            console.log('✅ Hyvor chargé avec succès');
-            adjustIframeHeight();
+            console.log('✅ Script Hyvor chargé avec succès');
+            setTimeout(adjustIframeHeight, 2000);
         };
-        script.onerror = () => console.error('❌ Erreur chargement Hyvor');
+        
+        script.onerror = () => {
+            console.error('❌ Erreur lors du chargement du script Hyvor');
+        };
+        
         document.head.appendChild(script);
         
-        // Redimensionnement
+        // Fonctions de redimensionnement
         function adjustIframeHeight() {
             const height = Math.max(document.body.scrollHeight, 500);
-            window.parent.postMessage({ type: 'resize', height }, '*');
+            console.log('📏 Ajustement hauteur:', height);
+            window.parent.postMessage({
+                type: 'resize',
+                height: height
+            }, '*');
         }
         
-        // Observer les changements pour le redimensionnement
-        const observer = new MutationObserver(adjustIframeHeight);
-        observer.observe(container, { childList: true, subtree: true });
+        // Observer les changements dans le container
+        const resizeObserver = new ResizeObserver(() => {
+            adjustIframeHeight();
+        });
+        resizeObserver.observe(document.body);
         
+        // Redimensionnements périodiques
+        setTimeout(adjustIframeHeight, 1500);
         setTimeout(adjustIframeHeight, 3000);
-        setInterval(adjustIframeHeight, 5000);
+        setTimeout(adjustIframeHeight, 5000);
+        
+        setInterval(adjustIframeHeight, 10000);
+        
+        // Écouter les événements de chargement de Hyvor
+        window.addEventListener('message', (event) => {
+            if (event.data && event.data.type === 'hyvor-talk-loaded') {
+                console.log('🎉 Hyvor Talk chargé et prêt');
+                adjustIframeHeight();
+            }
+        });
+        
+        console.log('🎯 Script d\'initialisation terminé');
     </script>
 </body>
 </html>
